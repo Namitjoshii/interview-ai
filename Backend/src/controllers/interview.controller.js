@@ -1,33 +1,21 @@
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
-async function extractTextFromPdf(buffer) {
-    const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js")
-    const data = new Uint8Array(buffer)
-    const pdf = await pdfjsLib.getDocument({ data }).promise
-    let text = ""
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i)
-        const content = await page.getTextContent()
-        text += content.items.map(item => item.str).join(" ")
-    }
-    return text
-}
-
 async function generateInterViewReportController(req, res) {
     try {
-        const resumeText = await extractTextFromPdf(req.file.buffer)
+        const pdfParse = require("pdf-parse/lib/pdf-parse.js")
+        const resumeContent = await pdfParse(req.file.buffer)
         const { selfDescription, jobDescription } = req.body
 
         const interViewReportByAi = await generateInterviewReport({
-            resume: resumeText,
+            resume: resumeContent.text,
             selfDescription,
             jobDescription
         })
 
         const interviewReport = await interviewReportModel.create({
             user: req.user.id,
-            resume: resumeText,
+            resume: resumeContent.text,
             selfDescription,
             jobDescription,
             ...interViewReportByAi
