@@ -1,4 +1,6 @@
-const pdfParse = require("pdf-parse")
+// ✅ Sabse safe tarika
+const pdf = require("pdf-parse")
+const pdfParse = pdf.default || pdf
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
