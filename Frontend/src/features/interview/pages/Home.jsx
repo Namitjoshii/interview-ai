@@ -1,19 +1,73 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
 
 const Home = () => {
 
-    const { loading, generateReport,reports } = useInterview()
+    const { loading, generateReport, reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ resumeFile, setResumeFile ] = useState(null)
+    const [ isDragging, setIsDragging ] = useState(false)
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
+    // Safety net: browser ke default "open dropped file" behaviour ko
+    // window level par bhi block kar do, taaki dropzone ke bahar drop hone par
+    // bhi naya page na khule
+    useEffect(() => {
+        const blockDefault = (e) => e.preventDefault()
+        window.addEventListener('dragover', blockDefault)
+        window.addEventListener('drop', blockDefault)
+        return () => {
+            window.removeEventListener('dragover', blockDefault)
+            window.removeEventListener('drop', blockDefault)
+        }
+    }, [])
+
+    const validateAndSetFile = (file) => {
+        if (!file) return
+        const allowedTypes = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ]
+        if (!allowedTypes.includes(file.type)) {
+            alert('Sirf PDF ya DOCX file upload karein.')
+            return
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File 5MB se badi hai.')
+            return
+        }
+        setResumeFile(file)
+    }
+
+    const handleFileChange = (e) => {
+        validateAndSetFile(e.target.files[0])
+    }
+
+    const handleDrop = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+        validateAndSetFile(e.dataTransfer.files[0])
+    }
+
+    const handleDragOver = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(true)
+    }
+
+    const handleDragLeave = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+    }
+
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
         const data = await generateReport({ jobDescription, selfDescription, resumeFile })
         navigate(`/interview/${data._id}`)
     }
@@ -29,17 +83,14 @@ const Home = () => {
     return (
         <div className='home-page'>
 
-            {/* Page Header */}
             <header className='page-header'>
                 <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
                 <p>Let our AI analyze the job requirements and your unique profile to build a winning strategy.</p>
             </header>
 
-            {/* Main Card */}
             <div className='interview-card'>
                 <div className='interview-card__body'>
 
-                    {/* Left Panel - Job Description */}
                     <div className='panel panel--left'>
                         <div className='panel__header'>
                             <span className='panel__icon'>
@@ -49,18 +100,17 @@ const Home = () => {
                             <span className='badge badge--required'>Required</span>
                         </div>
                         <textarea
+                            value={jobDescription}
                             onChange={(e) => { setJobDescription(e.target.value) }}
                             className='panel__textarea'
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
                         />
-                        <div className='char-counter'>0 / 5000 chars</div>
+                        <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
                     </div>
 
-                    {/* Vertical Divider */}
                     <div className='panel-divider' />
 
-                    {/* Right Panel - Profile */}
                     <div className='panel panel--right'>
                         <div className='panel__header'>
                             <span className='panel__icon'>
@@ -69,29 +119,51 @@ const Home = () => {
                             <h2>Your Profile</h2>
                         </div>
 
-                        {/* Upload Resume */}
                         <div className='upload-section'>
                             <label className='section-label'>
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
-                            <label className='dropzone' htmlFor='resume'>
+                            <label
+                                className={`dropzone ${isDragging ? 'dropzone--active' : ''}`}
+                                htmlFor='resume'
+                                onDragOver={handleDragOver}
+                                onDragEnter={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                                 <span className='dropzone__icon'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
                                 </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
+                                {resumeFile ? (
+                                    <>
+                                        <p className='dropzone__title'>{resumeFile.name}</p>
+                                        <p className='dropzone__subtitle'>Click or drop to replace</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
+                                        <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
+                                    </>
+                                )}
+                                <input
+                                    ref={resumeInputRef}
+                                    hidden
+                                    type='file'
+                                    id='resume'
+                                    name='resume'
+                                    accept='.pdf,.docx'
+                                    onChange={handleFileChange}
+                                />
                             </label>
                         </div>
 
-                        {/* OR Divider */}
                         <div className='or-divider'><span>OR</span></div>
 
-                        {/* Quick Self-Description */}
                         <div className='self-description'>
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
                             <textarea
+                                value={selfDescription}
                                 onChange={(e) => { setSelfDescription(e.target.value) }}
                                 id='selfDescription'
                                 name='selfDescription'
@@ -100,7 +172,6 @@ const Home = () => {
                             />
                         </div>
 
-                        {/* Info Box */}
                         <div className='info-box'>
                             <span className='info-box__icon'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" stroke="#1a1f27" strokeWidth="2" /><line x1="12" y1="16" x2="12.01" y2="16" stroke="#1a1f27" strokeWidth="2" /></svg>
@@ -110,7 +181,6 @@ const Home = () => {
                     </div>
                 </div>
 
-                {/* Card Footer */}
                 <div className='interview-card__footer'>
                     <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
                     <button
@@ -122,7 +192,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Recent Reports List */}
             {reports.length > 0 && (
                 <section className='recent-reports'>
                     <h2>My Recent Interview Plans</h2>
@@ -138,7 +207,6 @@ const Home = () => {
                 </section>
             )}
 
-            {/* Page Footer */}
             <footer className='page-footer'>
                 <a href='#'>Privacy Policy</a>
                 <a href='#'>Terms of Service</a>
