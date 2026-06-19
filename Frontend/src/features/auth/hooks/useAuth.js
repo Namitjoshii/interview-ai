@@ -11,8 +11,12 @@ export const useAuth = () => {
         setLoading(true)
         try {
             const data = await login({ email, password })
-            localStorage.setItem("token", data.token) // ✅ token save karo
-            setUser(data.user)
+            if (data?.token) {
+                localStorage.setItem("token", data.token)
+            }
+            if (data?.user) {
+                setUser(data.user)
+            }
         } catch (err) {
             console.log(err)
         } finally {
@@ -24,8 +28,12 @@ export const useAuth = () => {
         setLoading(true)
         try {
             const data = await register({ username, email, password })
-            localStorage.setItem("token", data.token) // ✅ token save karo
-            setUser(data.user)
+            if (data?.token) {
+                localStorage.setItem("token", data.token)
+            }
+            if (data?.user) {
+                setUser(data.user)
+            }
         } catch (err) {
             console.log(err)
         } finally {
@@ -37,7 +45,7 @@ export const useAuth = () => {
         setLoading(true)
         try {
             await logout()
-            localStorage.removeItem("token") // ✅ token hata do
+            localStorage.removeItem("token")
             setUser(null)
         } catch (err) {
             console.log(err)
@@ -50,11 +58,13 @@ export const useAuth = () => {
         const getAndSetUser = async () => {
             try {
                 const data = await getMe()
-                setUser(data.user)
-            } catch (err) { 
+                if (data?.user) {  // ✅ null check - loading stuck nahi hogi
+                    setUser(data.user)
+                }
+            } catch (err) {
                 console.log(err)
             } finally {
-                setLoading(false)
+                setLoading(false) // ✅ har case mein false hoga
             }
         }
 
