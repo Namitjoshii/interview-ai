@@ -9,9 +9,6 @@ const interviewReportModel = require("../models/interviewReport.model")
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
 
-const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
-const interviewReportModel = require("../models/interviewReport.model")
-
 async function generateInterViewReportController(req, res) {
     try {
         // ✅ Sahi tarika - directly buffer pass karo
