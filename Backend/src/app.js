@@ -8,8 +8,13 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
     origin: "http://localhost:5173",
+     "https://interview-ai-five-wheat.vercel.app",
     credentials: true
 }))
+
+app.get("/", (req, res) => {
+  res.send("Interview AI Backend Running 🚀");
+});
 
 /* require all the routes here */
 const authRouter = require("./routes/auth.routes")
