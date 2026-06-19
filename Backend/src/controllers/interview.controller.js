@@ -8,32 +8,40 @@ const interviewReportModel = require("../models/interviewReport.model")
 /**
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
+const pdfParse = require("pdf-parse")
+const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
+const interviewReportModel = require("../models/interviewReport.model")
+
 async function generateInterViewReportController(req, res) {
+    try {
+        // ✅ Sahi tarika - directly buffer pass karo
+        const resumeContent = await pdfParse(req.file.buffer)
+        const { selfDescription, jobDescription } = req.body
 
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
-    const { selfDescription, jobDescription } = req.body
+        const interViewReportByAi = await generateInterviewReport({
+            resume: resumeContent.text,
+            selfDescription,
+            jobDescription
+        })
 
-    const interViewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription
-    })
+        const interviewReport = await interviewReportModel.create({
+            user: req.user.id,
+            resume: resumeContent.text,
+            selfDescription,
+            jobDescription,
+            ...interViewReportByAi
+        })
 
-    const interviewReport = await interviewReportModel.create({
-        user: req.user.id,
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription,
-        ...interViewReportByAi
-    })
+        res.status(201).json({
+            message: "Interview report generated successfully.",
+            interviewReport
+        })
 
-    res.status(201).json({
-        message: "Interview report generated successfully.",
-        interviewReport
-    })
-
+    } catch (err) {
+        console.error("Error:", err)
+        res.status(500).json({ message: "Something went wrong.", error: err.message })
+    }
 }
-
 /**
  * @description Controller to get interview report by interviewId.
  */

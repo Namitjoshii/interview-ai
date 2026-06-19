@@ -101,6 +101,7 @@ async function loginUserController(req, res) {
 
     res.status(200).json({
         message: "User loggedIn successfully.",
+        token,
         user: {
             id: user._id,
             username: user.username,
@@ -122,7 +123,7 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token })
     }
 
-    rres.clearCookie("token", {
+    res.clearCookie("token", {
     httpOnly: true,
     secure: true,
     sameSite: "none"
