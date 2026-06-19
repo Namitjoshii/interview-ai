@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
+import posthog from 'posthog-js'
 
 const Home = () => {
 
@@ -45,14 +46,29 @@ const Home = () => {
     }
 
     const handleFileChange = (e) => {
+        const file = e.target.files[0]
         validateAndSetFile(e.target.files[0])
+
+        if (file) {
+        posthog.capture('resume_uploaded', {
+            file_type: file.type
+        })
+    }
+
     }
 
     const handleDrop = (e) => {
         e.preventDefault()
         e.stopPropagation()
         setIsDragging(false)
+        const file = e.dataTransfer.files[0]
         validateAndSetFile(e.dataTransfer.files[0])
+        if (file) {
+        posthog.capture('resume_uploaded', {
+            file_type: file.type,
+            upload_method: 'drag_drop'
+        })
+    }
     }
 
     const handleDragOver = (e) => {
@@ -68,7 +84,10 @@ const Home = () => {
     }
 
     const handleGenerateReport = async () => {
+        posthog.capture('generate_button_clicked')
         const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+         posthog.capture('report_generated', {has_resume: !!resumeFile, has_self_description: !!selfDescription, jd_length: jobDescription.length
+    })
         navigate(`/interview/${data._id}`)
     }
 
