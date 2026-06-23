@@ -104,7 +104,7 @@ return (
         <header className='page-header'>
             <div className='page-header__badge'>Interview AI</div>
             <h1>Prepare Smarter.<br /><span className='highlight'>Land the Role.</span></h1>
-            <p>Tell us about the job and your background,I will build a personalized skill gap analysis and interview strategy.</p>
+            <p>Analyze your profile, uncover missing skills, and generate a personalized interview strategy.</p>
         </header>
 
         <div className='wizard'>
