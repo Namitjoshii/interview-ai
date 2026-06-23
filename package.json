@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "pdf-parse": "^1.1.1",
-    "posthog-js": "^1.391.0"
-  }
-}
