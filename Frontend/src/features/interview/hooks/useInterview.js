@@ -25,12 +25,12 @@ export const useInterview = () => {
                 return response.interviewReport
             } else {
                 // ✅ AI busy hai toh user ko batao
-                alert("Server busy hai, 30 second baad dobara try karo!")
+                alert("Server busy, please try again after 30 seconds")
                 return null
             }
         } catch (error) {
             console.log(error)
-            alert("Kuch gadbad ho gayi, dobara try karo!")
+            alert("Something is wrong, please try uploading again.")
             return null
         } finally {
             setLoading(false)
